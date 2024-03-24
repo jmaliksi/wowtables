@@ -57,6 +57,8 @@ def get_db():
 
 @app.get('/api/roll')
 def roll(t: Annotated[List[str] | None, Query()] = None, db: Session = Depends(get_db)):
+    if not t:
+        raise HTTPException(status_code=400, detail=f'no tables specified')
     q = select(Entry).where(Entry.table.in_(t))
     tables = {}
     for row in db.execute(q).scalars():
@@ -75,6 +77,16 @@ def roll(t: Annotated[List[str] | None, Query()] = None, db: Session = Depends(g
 def tables(db: Session = Depends(get_db)):
     q = select(distinct(Entry.table))
     return db.scalars(q).all()
+
+
+@app.get('/api/categories')
+def categories(db: Session = Depends(get_db)):
+    q = select(Tag).order_by(Tag.name)
+    res = {}
+    for row in db.execute(q).scalars():
+        res.setdefault(row.name, [])
+        res[row.name].append(row.table)
+    return res
 
 
 def load_data(fn):
