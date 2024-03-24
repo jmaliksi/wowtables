@@ -1,17 +1,31 @@
-from fastapi import FastAPI, Query, Depends, HTTPException
-from typing import List, Optional, Annotated
-from sqlalchemy import create_engine, select, distinct
-from sqlalchemy.orm import sessionmaker, DeclarativeBase, Mapped, mapped_column, relationship, Session
-import csv
 import argparse
+import csv
 import random
 from collections import Counter
+from typing import Annotated, List, Optional
+
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, distinct, select
+from sqlalchemy.orm import (DeclarativeBase, Mapped, Session, mapped_column,
+                            relationship, sessionmaker)
 
 DB_URL = 'sqlite:///./data/tables.db'
 engine = create_engine(DB_URL, connect_args={'check_same_thread': False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 app = FastAPI()
+origins = [
+    'http://localhost:3000',
+    'localhost:3000',
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 
 class Base(DeclarativeBase):
