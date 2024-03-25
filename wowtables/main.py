@@ -118,7 +118,8 @@ def load_tags(fn):
             for row in reader:
                 table = row[0]
                 for tag in row[1:]:
-                    db.add(Tag(table=table, name=tag))
+                    if tag:
+                        db.add(Tag(table=table, name=tag))
             db.commit()
     finally:
         db.close()
