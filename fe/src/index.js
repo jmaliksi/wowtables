@@ -16,6 +16,8 @@ import {
   List,
   ListItem,
   Heading,
+  Wrap,
+  Flex,
 } from "@chakra-ui/react";
 
 const Context = React.createContext({
@@ -103,7 +105,7 @@ function Tables() {
   }, [])
   return (
     <Container>
-      <Stack spacing={2} direction='column'>
+      <Wrap spacing={2}>
         {
           tables.map((table) => (
             <Button key={table} onClick={() => {
@@ -111,7 +113,7 @@ function Tables() {
             }}>{table}</Button>
           ))
         }
-      </Stack>
+      </Wrap>
     </Container>
   )
 }
@@ -122,9 +124,13 @@ function App() {
   return (
     <ChakraProvider>
       <Context.Provider value={{query, setQuery, history, setHistory}}>
-        <Query/>
-        <History/>
-        <Tables/>
+        <Flex>
+          <Tables/>
+          <Stack>
+            <Query/>
+            <History/>
+          </Stack>
+        </Flex>
       </Context.Provider>
     </ChakraProvider>
   )
