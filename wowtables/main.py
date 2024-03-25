@@ -127,14 +127,14 @@ def load_tags(fn):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['load', 'tag', 'init', 'clear'])
-    parser.add_argument('--csv')
+    parser.add_argument('command', choices=['load', 'init', 'clear'])
+    parser.add_argument('--tables')
+    parser.add_argument('--tags')
     args = parser.parse_args()
     if args.command == 'init':
         Base.metadata.create_all(bind=engine)
     elif args.command == 'load':
-        load_data(args.csv)
-    elif args.command == 'tag':
-        load_tags(args.csv)
+        load_data(args.tables)
+        load_tags(args.tags)
     elif args.command == 'clear':
         Base.metadata.drop_all(bind=engine)

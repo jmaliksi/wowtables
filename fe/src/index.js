@@ -44,7 +44,7 @@ function Query() {
   const roll = async () => {
     let params = new URLSearchParams()
     query.map((q) => params.append("t", q))
-    const res = await fetch("http://localhost:8000/api/roll?" + params)
+    const res = await fetch("/api/roll?" + params)
     const answer = await res.json()
     setHistory([answer].concat(...history))
   }
@@ -146,7 +146,7 @@ function Tables() {
   const [tables, setTables] = useState([])
   const {query, setQuery} = React.useContext(Context)
   const fetchTables = async () => {
-    const res = await fetch("http://localhost:8000/api/tables")
+    const res = await fetch("/api/tables")
     const t = await res.json()
     setTables(t)
   }
@@ -169,7 +169,7 @@ function Tables() {
 function Categories() {
   const [categories, setCategories] = useState({})
   const fetchCategories = async () => {
-    const res = await fetch("http://localhost:8000/api/categories")
+    const res = await fetch("/api/categories")
     const c = await res.json()
     setCategories(c)
   }

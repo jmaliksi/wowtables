@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+EXPOSE 5001
+
+RUN pip install poetry
+
+WORKDIR /app
+RUN mkdir /app/data
+VOLUME /app/data
+
+COPY ./wowtables poetry.lock pyproject.toml ./
+RUN poetry config virtualenvs.create false
+RUN poetry install
+RUN pip install "uvicorn[standard]"
+
+RUN python -m main init
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001"]
