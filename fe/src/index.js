@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import {
-  ChakraProvider,
-  Button,
-  Stack,
-  Container,
-  ButtonGroup,
   Box,
+  Button,
+  ButtonGroup,
   Card,
-  CardHeader,
   CardBody,
+  CardHeader,
+  Center,
+  ChakraProvider,
+  CloseButton,
+  Collapse,
+  Container,
+  Flex,
   HStack,
-  Tag,
-  TagLabel,
-  TagCloseButton,
+  Heading,
   List,
   ListItem,
-  Heading,
-  Flex,
-  Wrap,
-  Text,
-  CloseButton,
-  Tabs,
-  TabList,
+  Stack,
   Tab,
-  TabPanels,
+  TabList,
   TabPanel,
-  Collapse,
+  TabPanels,
+  Tabs,
+  Tag,
+  TagCloseButton,
+  TagLabel,
+  Text,
+  Wrap,
   useDisclosure,
 } from "@chakra-ui/react";
 
@@ -49,19 +50,21 @@ function Query() {
     setHistory([answer].concat(...history))
   }
   return (
-    <Box boxShadow="base" borderRadius="3">
-      <ButtonGroup>
-        <Button onClick={roll} isDisabled={query.length === 0} colorScheme="purple">
-          Roll!
-        </Button>
-        <Button onClick={() => setQuery([])} isDisabled={query.length === 0}>
-          Clear Query
-        </Button>
-        <Button onClick={() => setHistory([])} isDisabled={history.length === 0}>
-          Clear History
-        </Button>
-      </ButtonGroup>
-      <Container minH="2em">
+    <Box boxShadow="base" borderRadius="3" padding="4px">
+      <Center>
+        <ButtonGroup>
+          <Button onClick={roll} isDisabled={query.length === 0} colorScheme="purple">
+            Roll!
+          </Button>
+          <Button onClick={() => setQuery([])} isDisabled={query.length === 0}>
+            Clear Query
+          </Button>
+          <Button onClick={() => setHistory([])} isDisabled={history.length === 0}>
+            Clear History
+          </Button>
+        </ButtonGroup>
+      </Center>
+      <Container minH="2em" paddingTop="3px" borderRadius="3">
         {
           query.map((q, i) => (
             <Tag size='md' key={i}>
@@ -78,67 +81,71 @@ function Query() {
 function History() {
   const {history, setHistory} = React.useContext(Context)
   return (
-    <Container spacing={5}>
-      {
-        history.map((entry, i) => (
-          <HistoryCard key={i} onClose={() => setHistory(history.toSpliced(i, 1))} entry={entry}/>
-        ))
-      }
-    </Container>
+    <Box overflow="scroll">
+      <Container spacing={5}>
+        {
+          history.map((entry, i) => (
+            <HistoryCard key={i} onClose={() => setHistory(history.toSpliced(i, 1))} entry={entry}/>
+          ))
+        }
+      </Container>
+    </Box>
   )
 }
 
 function HistoryCard({onClose, entry}) {
   const {setQuery, saved, setSaved} = React.useContext(Context)
   return (
-    <Card>
-      <Flex justifyContent="space-between">
-        <ButtonGroup>
-          <Button
-            onClick={() => {
-              let s = saved.concat(entry)
-              setSaved(s)
-              localStorage.setItem("saved", JSON.stringify(s))
-            }}>
-            💾
-          </Button>
-          <Button
-            onClick={() => {
-              let q = []
-              for (let key in entry) {
-                for (let i = 0; i < entry[key].length; i++) {
-                  q.push(key)
+    <Box marginY="4px">
+      <Card>
+        <Flex justifyContent="space-between">
+          <ButtonGroup>
+            <Button
+              onClick={() => {
+                let s = saved.concat(entry)
+                setSaved(s)
+                localStorage.setItem("saved", JSON.stringify(s))
+              }}>
+              💾
+            </Button>
+            <Button
+              onClick={() => {
+                let q = []
+                for (let key in entry) {
+                  for (let i = 0; i < entry[key].length; i++) {
+                    q.push(key)
+                  }
                 }
-              }
-              setQuery(q)
-            }}
-          >
-            ↻
-          </Button>
-        </ButtonGroup>
-        <CloseButton onClick={onClose} alignSelf="flex-end"/>
-      </Flex>
-      <CardBody>
-        {
-          Object.keys(entry).map((table, i) => (
-            <HStack key={i} alignItems="flex-start">
-              <Heading size="xs">{table}</Heading>
-              <List>
-                {
-                  entry[table].map((roll, i) => (
-                    <ListItem key={i}>
-                      <Text fontSize="xs">
-                        {roll}
-                      </Text>
-                    </ListItem>
-                  ))
-                }
-              </List>
-            </HStack>
-          ))
-        }
-      </CardBody>
-    </Card>
+                setQuery(q)
+              }}
+            >
+              ↻
+            </Button>
+          </ButtonGroup>
+          <CloseButton onClick={onClose} alignSelf="flex-end"/>
+        </Flex>
+        <CardBody>
+          {
+            Object.keys(entry).map((table, i) => (
+              <HStack key={i} alignItems="flex-start">
+                <Heading size="xs">{table}</Heading>
+                <List>
+                  {
+                    entry[table].map((roll, i) => (
+                      <ListItem key={i}>
+                        <Text fontSize="xs">
+                          {roll}
+                        </Text>
+                      </ListItem>
+                    ))
+                  }
+                </List>
+              </HStack>
+            ))
+          }
+        </CardBody>
+      </Card>
+    </Box>
   )
 }
 
@@ -154,15 +161,17 @@ function Tables() {
     fetchTables()
   }, [])
   return (
-    <Wrap spacing={3} columns={3}>
-      {
-        tables.map((table, i) => (
-          <Button key={table + i} onClick={() => {
-            setQuery(query.concat(table))
-          }}>{table}</Button>
-        ))
-      }
-    </Wrap>
+    <Box overflow="scroll">
+      <Wrap spacing={3} columns={3}>
+        {
+          tables.map((table, i) => (
+            <Button key={table + i} onClick={() => {
+              setQuery(query.concat(table))
+            }}>{table}</Button>
+          ))
+        }
+      </Wrap>
+    </Box>
   )
 }
 
@@ -177,13 +186,15 @@ function Categories() {
     fetchCategories()
   }, [])
   return (
-    <Wrap spacing={3}>
-      {
-        Object.keys(categories).map((category, i) => (
-          <CategoryCard key={i} category={category} tables={categories[category]}/>
-        ))
-      }
-    </Wrap>
+    <Box overflow="scroll">
+      <Wrap spacing={3}>
+        {
+          Object.keys(categories).map((category, i) => (
+            <CategoryCard key={i} category={category} tables={categories[category]}/>
+          ))
+        }
+      </Wrap>
+    </Box>
   )
 }
 
@@ -217,17 +228,19 @@ function CategoryCard({category, tables}) {
 function SavedRolls() {
   const {saved, setSaved} = React.useContext(Context)
   return (
-    <Wrap spacing={5}>
-      {
-        saved.map((s, i) => (
-          <HistoryCard key={i} entry={s} onClose={() => {
-            let s = saved.toSpliced(i, 1)
-            setSaved(s)
-            localStorage.setItem("saved", JSON.stringify(s))
-          }} />
-        ))
-      }
-    </Wrap>
+    <Box overflow="scroll" width="100%">
+      <Wrap spacing={5}>
+        {
+          saved.map((s, i) => (
+            <HistoryCard key={i} entry={s} onClose={() => {
+              let s = saved.toSpliced(i, 1)
+              setSaved(s)
+              localStorage.setItem("saved", JSON.stringify(s))
+            }} />
+          ))
+        }
+      </Wrap>
+    </Box>
   )
 }
 
@@ -246,7 +259,7 @@ function App() {
   return (
     <ChakraProvider>
       <Context.Provider value={{query, setQuery, history, setHistory, saved, setSaved}}>
-        <Flex>
+        <Flex h="vh" w="vw">
           <Tabs variant="enclosed">
             <TabList>
               <Tab>All Tables</Tab>
@@ -265,7 +278,7 @@ function App() {
               </TabPanel>
             </TabPanels>
           </Tabs>
-          <Stack minW="30em" boxShadow="base" borderRadius="5">
+          <Stack minW="22em" boxShadow="base" borderRadius="5">
             <Query/>
             <History/>
           </Stack>
