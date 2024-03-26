@@ -29,7 +29,15 @@ import {
   Text,
   Wrap,
   useDisclosure,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+  TableContainer,
+
 } from "@chakra-ui/react";
+
+const API_URL = process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:8000/';
 
 const Context = React.createContext({
   query: [],
@@ -45,9 +53,14 @@ function Query() {
   const roll = async () => {
     let params = new URLSearchParams()
     query.map((q) => params.append("t", q))
-    const res = await fetch("/api/roll?" + params)
+    const res = await fetch(API_URL + "api/roll?" + params)
     const answer = await res.json()
-    setHistory([answer].concat(...history))
+    let h = [answer].concat(...history)
+    if (h.length > 100) {
+      h = h.slice(0, 100)
+    }
+    setHistory(h)
+    localStorage.setItem("history", JSON.stringify(h))
   }
   return (
     <Box boxShadow="base" borderRadius="3" padding="4px">
@@ -59,7 +72,10 @@ function Query() {
           <Button onClick={() => setQuery([])} isDisabled={query.length === 0}>
             Clear Query
           </Button>
-          <Button onClick={() => setHistory([])} isDisabled={history.length === 0}>
+          <Button onClick={() => {
+            setHistory([])
+            localStorage.setItem("history", "[]")
+          }} isDisabled={history.length === 0}>
             Clear History
           </Button>
         </ButtonGroup>
@@ -153,7 +169,7 @@ function Tables() {
   const [tables, setTables] = useState([])
   const {query, setQuery} = React.useContext(Context)
   const fetchTables = async () => {
-    const res = await fetch("/api/tables")
+    const res = await fetch(API_URL + "api/tables")
     const t = await res.json()
     setTables(t)
   }
@@ -178,7 +194,7 @@ function Tables() {
 function Categories() {
   const [categories, setCategories] = useState({})
   const fetchCategories = async () => {
-    const res = await fetch("/api/categories")
+    const res = await fetch(API_URL + "api/categories")
     const c = await res.json()
     setCategories(c)
   }
@@ -244,6 +260,78 @@ function SavedRolls() {
   )
 }
 
+function Names() {
+  const [names, setNames] = useState([])
+  const onoThresh = 10;
+  const getNames = async (n, t) => {
+    const res = await fetch('https://onomancer.sibr.dev/api/getNames?random=1&threshold=' + t + '&limit=' + n)
+    const na = await res.json()
+    return na
+  }
+  const addNames = async (n) => {
+    let na = await getNames(n, onoThresh)
+    let newNames = [...names]
+    for (let i = 0; i < na.length; i++) {
+      newNames.push([na[i], ''])
+    }
+    setNames(newNames)
+  }
+  return (
+    <Box>
+      <TableContainer>
+        <Table variant='simple'>
+          <Tbody>
+            {
+              names.map((data, i) => (
+                <Tr key={i}>
+                  <Td>
+                    {data[0]}
+                  </Td>
+                  <Td>
+                    <ButtonGroup>
+                      <Button>
+                        edit
+                      </Button>
+                      <Button>
+                        {data[1]}
+                      </Button>
+                      <Button>
+                        dice
+                      </Button>
+                      <CloseButton/>
+                    </ButtonGroup>
+                  </Td>
+                </Tr>
+              ))
+            }
+          </Tbody>
+        </Table>
+      </TableContainer>
+      <Button onClick={() => addNames(1)}>
+        +
+      </Button>
+    </Box>
+  )
+  /*
+  return (
+    <Wrap spacing={3}>
+      {
+        names.map((name, i) => (
+          <Card key={i} w="10em">
+            <CardHeader>
+              {name}
+            </CardHeader>
+            <CloseButton/>
+          </Card>
+        ))
+      }
+      <Card key="plus" w="10em">
+      </Card>
+    </Wrap>
+  )
+  */
+}
+
 function App() {
   const [query, setQuery] = useState([])
   const [history, setHistory] = useState([])
@@ -254,16 +342,21 @@ function App() {
     if (s) {
       setSaved(s)
     }
+    const h = JSON.parse(localStorage.getItem("history"))
+    if (h) {
+      setHistory(h)
+    }
   }, [])
 
   return (
     <ChakraProvider>
       <Context.Provider value={{query, setQuery, history, setHistory, saved, setSaved}}>
-        <Flex h="vh" w="vw">
+        <Flex h="100vh" w="100vw">
           <Tabs variant="enclosed">
             <TabList>
               <Tab>All Tables</Tab>
               <Tab>By Category</Tab>
+              <Tab>Names</Tab>
               <Tab>Saved</Tab>
             </TabList>
             <TabPanels>
@@ -272,6 +365,9 @@ function App() {
               </TabPanel>
               <TabPanel>
                 <Categories/>
+              </TabPanel>
+              <TabPanel>
+                <Names/>
               </TabPanel>
               <TabPanel>
                 <SavedRolls/>
