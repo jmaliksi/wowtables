@@ -34,8 +34,22 @@ import {
   Tr,
   Td,
   TableContainer,
-
+  Popover,
+  PopoverTrigger,
+  Portal,
+  PopoverContent,
+  PopoverArrow,
+  PopoverHeader,
+  PopoverCloseButton,
+  PopoverBody,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Highlight,
 } from "@chakra-ui/react";
+import { CheckIcon, ChevronDownIcon } from "@chakra-ui/icons";
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:8000/';
 
@@ -262,7 +276,11 @@ function SavedRolls() {
 
 function Names() {
   const [names, setNames] = useState([])
-  const onoThresh = 10;
+  const saveNames = (nms) => {
+    setNames(nms)
+    localStorage.setItem("names", JSON.stringify(nms))
+  }
+  const onoThresh = 4;
   const getNames = async (n, t) => {
     const res = await fetch('https://onomancer.sibr.dev/api/getNames?random=1&threshold=' + t + '&limit=' + n)
     const na = await res.json()
@@ -272,36 +290,52 @@ function Names() {
     let na = await getNames(n, onoThresh)
     let newNames = [...names]
     for (let i = 0; i < na.length; i++) {
-      newNames.push([na[i], ''])
+      newNames.push([na[i], 'white'])
     }
-    setNames(newNames)
+    saveNames(newNames)
   }
+
+  useEffect(() => {
+    const n = JSON.parse(localStorage.getItem("names"))
+    if (n) {
+      setNames(n)
+    }
+  }, [])
+  const [highlight, setHighlight] = useState('')
+
   return (
-    <Box>
+    <Box w="100%">
+      <ButtonGroup>
+        <Menu>
+          <MenuButton as={Button} rightIcon={<ChevronDownIcon/>}>
+            Sort
+          </MenuButton>
+          <MenuList>
+            <MenuItem onClick={() => {saveNames(names.toSorted((a,b)=>a[1].localeCompare(b[1])))}}>
+              Color
+            </MenuItem>
+            <MenuItem onClick={() => saveNames(names.toSorted((a,b)=>a[0].localeCompare(b[0])))}>
+              Alphabetical
+            </MenuItem>
+          </MenuList>
+        </Menu>
+        <Button onClick={() => setHighlight(names[Math.floor(Math.random() * names.length)][0])}>
+          🎲
+        </Button>
+      </ButtonGroup>
       <TableContainer>
-        <Table variant='simple'>
+        <Table variant='simple' size='sm'>
           <Tbody>
             {
               names.map((data, i) => (
-                <Tr key={i}>
-                  <Td>
-                    {data[0]}
-                  </Td>
-                  <Td>
-                    <ButtonGroup>
-                      <Button>
-                        edit
-                      </Button>
-                      <Button>
-                        {data[1]}
-                      </Button>
-                      <Button>
-                        dice
-                      </Button>
-                      <CloseButton/>
-                    </ButtonGroup>
-                  </Td>
-                </Tr>
+                <NameRow
+                  name={data[0]}
+                  color={data[1]}
+                  i={i} key={i}
+                  names={names}
+                  saveNames={saveNames}
+                  highlight={highlight}
+                />
               ))
             }
           </Tbody>
@@ -312,24 +346,56 @@ function Names() {
       </Button>
     </Box>
   )
-  /*
+}
+
+function NameRow({name, color, i, names, saveNames, highlight}) {
+  const colors = ['white', 'gray', 'red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
   return (
-    <Wrap spacing={3}>
-      {
-        names.map((name, i) => (
-          <Card key={i} w="10em">
-            <CardHeader>
-              {name}
-            </CardHeader>
-            <CloseButton/>
-          </Card>
-        ))
-      }
-      <Card key="plus" w="10em">
-      </Card>
-    </Wrap>
+    <Tr key={i} bg={color + ".100"}>
+      <Td>
+        <Popover>
+          <PopoverTrigger>
+            <IconButton border="1px solid gray" colorScheme={color} isRound={true} variant="solid"/>
+          </PopoverTrigger>
+          <Portal>
+            <PopoverContent>
+              <PopoverArrow />
+              <PopoverHeader>{color}</PopoverHeader>
+              <PopoverCloseButton/>
+              <PopoverBody>
+                <Wrap>
+                {
+                  colors.map((c, j) => (
+                    <IconButton
+                      border="1px solid gray"
+                      colorScheme={c} isRound={true}  variant="solid"
+                      aria-label={c}
+                      key={j}
+                      icon={c === color ? <CheckIcon color="black"/> : ""}
+                      onClick={() => {
+                        let n = [...names]
+                        n[i][1] = c
+                        saveNames(n)
+                      }}
+                    />
+                  ))
+                }
+                </Wrap>
+              </PopoverBody>
+            </PopoverContent>
+          </Portal>
+        </Popover>
+      </Td>
+      <Td>
+        <Highlight query={highlight} styles={{px:'2', py:'1', rounded:'full', border: '1px solid black', bg:'white', fontWeight:'bold'}}>{name}</Highlight>
+      </Td>
+      <Td>
+        <Button onClick={() => saveNames(names.toSpliced(i, 1))}>
+          🗑️
+        </Button>
+      </Td>
+    </Tr>
   )
-  */
 }
 
 function App() {
