@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
+    volumes:
+      - type: volume
+        source: db-data
+        target: /app/data
   client:
     build:
       context: .
@@ -11,3 +15,6 @@ services:
       - "3001:80"
     depends_on:
       - api
+
+volumes:
+  db-data:

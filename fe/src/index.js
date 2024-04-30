@@ -29,27 +29,8 @@ import {
   Text,
   Wrap,
   useDisclosure,
-  Table,
-  Tbody,
-  Tr,
-  Td,
-  TableContainer,
-  Popover,
-  PopoverTrigger,
-  Portal,
-  PopoverContent,
-  PopoverArrow,
-  PopoverHeader,
-  PopoverCloseButton,
-  PopoverBody,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Highlight,
 } from "@chakra-ui/react";
-import { CheckIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import {Names} from './names';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:8000/';
 
@@ -274,130 +255,6 @@ function SavedRolls() {
   )
 }
 
-function Names() {
-  const [names, setNames] = useState([])
-  const saveNames = (nms) => {
-    setNames(nms)
-    localStorage.setItem("names", JSON.stringify(nms))
-  }
-  const onoThresh = 4;
-  const getNames = async (n, t) => {
-    const res = await fetch('https://onomancer.sibr.dev/api/getNames?random=1&threshold=' + t + '&limit=' + n)
-    const na = await res.json()
-    return na
-  }
-  const addNames = async (n) => {
-    let na = await getNames(n, onoThresh)
-    let newNames = [...names]
-    for (let i = 0; i < na.length; i++) {
-      newNames.push([na[i], 'white'])
-    }
-    saveNames(newNames)
-  }
-
-  useEffect(() => {
-    const n = JSON.parse(localStorage.getItem("names"))
-    if (n) {
-      setNames(n)
-    }
-  }, [])
-  const [highlight, setHighlight] = useState('')
-
-  return (
-    <Box w="100%">
-      <ButtonGroup>
-        <Menu>
-          <MenuButton as={Button} rightIcon={<ChevronDownIcon/>}>
-            Sort
-          </MenuButton>
-          <MenuList>
-            <MenuItem onClick={() => {saveNames(names.toSorted((a,b)=>a[1].localeCompare(b[1])))}}>
-              Color
-            </MenuItem>
-            <MenuItem onClick={() => saveNames(names.toSorted((a,b)=>a[0].localeCompare(b[0])))}>
-              Alphabetical
-            </MenuItem>
-          </MenuList>
-        </Menu>
-        <Button onClick={() => setHighlight(names[Math.floor(Math.random() * names.length)][0])}>
-          🎲
-        </Button>
-      </ButtonGroup>
-      <TableContainer>
-        <Table variant='simple' size='sm'>
-          <Tbody>
-            {
-              names.map((data, i) => (
-                <NameRow
-                  name={data[0]}
-                  color={data[1]}
-                  i={i} key={i}
-                  names={names}
-                  saveNames={saveNames}
-                  highlight={highlight}
-                />
-              ))
-            }
-          </Tbody>
-        </Table>
-      </TableContainer>
-      <Button onClick={() => addNames(1)}>
-        +
-      </Button>
-    </Box>
-  )
-}
-
-function NameRow({name, color, i, names, saveNames, highlight}) {
-  const colors = ['white', 'gray', 'red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
-  return (
-    <Tr key={i} bg={color + ".100"}>
-      <Td>
-        <Popover>
-          <PopoverTrigger>
-            <IconButton border="1px solid gray" colorScheme={color} isRound={true} variant="solid"/>
-          </PopoverTrigger>
-          <Portal>
-            <PopoverContent>
-              <PopoverArrow />
-              <PopoverHeader>{color}</PopoverHeader>
-              <PopoverCloseButton/>
-              <PopoverBody>
-                <Wrap>
-                {
-                  colors.map((c, j) => (
-                    <IconButton
-                      border="1px solid gray"
-                      colorScheme={c} isRound={true}  variant="solid"
-                      aria-label={c}
-                      key={j}
-                      icon={c === color ? <CheckIcon color="black"/> : ""}
-                      onClick={() => {
-                        let n = [...names]
-                        n[i][1] = c
-                        saveNames(n)
-                      }}
-                    />
-                  ))
-                }
-                </Wrap>
-              </PopoverBody>
-            </PopoverContent>
-          </Portal>
-        </Popover>
-      </Td>
-      <Td>
-        <Highlight query={highlight} styles={{px:'2', py:'1', rounded:'full', border: '1px solid black', bg:'white', fontWeight:'bold'}}>{name}</Highlight>
-      </Td>
-      <Td>
-        <Button onClick={() => saveNames(names.toSpliced(i, 1))}>
-          🗑️
-        </Button>
-      </Td>
-    </Tr>
-  )
-}
-
 function App() {
   const [query, setQuery] = useState([])
   const [history, setHistory] = useState([])
@@ -420,20 +277,20 @@ function App() {
         <Flex h="100vh" w="100vw">
           <Tabs variant="enclosed">
             <TabList>
+              <Tab>Names</Tab>
               <Tab>All Tables</Tab>
               <Tab>By Category</Tab>
-              <Tab>Names</Tab>
               <Tab>Saved</Tab>
             </TabList>
             <TabPanels>
+              <TabPanel>
+                <Names/>
+              </TabPanel>
               <TabPanel>
                 <Tables/>
               </TabPanel>
               <TabPanel>
                 <Categories/>
-              </TabPanel>
-              <TabPanel>
-                <Names/>
               </TabPanel>
               <TabPanel>
                 <SavedRolls/>
