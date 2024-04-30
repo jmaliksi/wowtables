@@ -284,7 +284,7 @@ function App() {
             </TabList>
             <TabPanels>
               <TabPanel>
-                <Names/>
+                <Names query={query}/>
               </TabPanel>
               <TabPanel>
                 <Tables/>

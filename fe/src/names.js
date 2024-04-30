@@ -10,9 +10,11 @@ import {
   ButtonGroup,
   FormControl,
   FormLabel,
-  Highlight,
   HStack,
+  Heading,
   IconButton,
+  List,
+  ListItem,
   Menu,
   MenuButton,
   MenuItem,
@@ -31,11 +33,7 @@ import {
   PopoverTrigger,
   Portal,
   Select,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Tr,
+  Text,
   VStack,
   Wrap,
 } from "@chakra-ui/react";
@@ -43,7 +41,7 @@ import { CheckIcon, ChevronDownIcon } from "@chakra-ui/icons";
 
 const ONOMANCER_URL = 'https://onomancer.sibr.dev/api/';
 
-export function Names() {
+export function Names({query}) {
   const [names, setNames] = useState([])
   const saveNames = (nms) => {
     setNames(nms)
@@ -63,13 +61,13 @@ export function Names() {
     }
   }, [])
   const [mode, setMode] = useState('normal')
-  const [highlight, setHighlight] = useState('')
+  const [highlight, setHighlight] = useState(-1)
 
   return (
     <Box>
       {mode === 'edit' && <NamesAdder names={names} addNames={addNames}/>}
       <NamesHeader names={names} saveNames={saveNames} mode={mode} setMode={setMode} setHighlight={setHighlight}/>
-      <NamesAccordion names={names} saveNames={saveNames} mode={mode}/>
+      <NamesAccordion names={names} saveNames={saveNames} mode={mode} highlight={highlight} setHighlight={setHighlight} query={query}/>
     </Box>
   )
 }
@@ -93,7 +91,7 @@ function NamesHeader({names, saveNames, setHighlight, mode, setMode}) {
           </MenuItem>
         </MenuList>
       </Menu>
-      <Button onClick={() => setHighlight(names[Math.floor(Math.random() * names.length)][0])}>
+      <Button onClick={() => setHighlight(Math.floor(Math.random() * names.length))}>
         🎲
       </Button>
       <Button onClick={() => setMode(mode === 'edit' ? 'normal' : 'edit')}>
@@ -105,7 +103,7 @@ function NamesHeader({names, saveNames, setHighlight, mode, setMode}) {
 
 function NamesAdder({names, addNames}) {
   return (
-    <Box>
+    <Box border='1px solid gray' marginBottom='2em' borderRadius="5" padding='.5em'>
       <Accordion defaultIndex={[0]}>
         <AccordionItem>
           <AccordionButton>
@@ -332,9 +330,17 @@ function AddByThreshold({addNames}) {
   )
 }
 
-function NamesAccordion({names, saveNames, mode}) {
+function NamesAccordion({names, saveNames, mode, highlight, setHighlight, query}) {
+  const API_URL = process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:8000/';
+  const roll = async () => {
+    let params = new URLSearchParams()
+    query.map((q) => params.append("t", q))
+    const res = await fetch(API_URL + "api/roll?" + params)
+    const answer = await res.json()
+    return answer
+  }
   return (
-    <Accordion allowToggle>
+    <Accordion allowToggle index={highlight !== -1 ? highlight : undefined} onClick={(e) => setHighlight(-1)}>
     {
       names.map((data, i) => (
         <AccordionItem key={i} bg={data[1] + ".100"}>
@@ -360,7 +366,37 @@ function NamesAccordion({names, saveNames, mode}) {
                 <AccordionIcon/>
               </AccordionButton>
               <AccordionPanel textAlign='left'>
-              hello
+                <Box>
+                {
+                  data[2] !== undefined && Object.keys(data[2]).map((table, i) => (
+                    <HStack key={i} alignItems="flex-start">
+                      <Heading size="xs">{table}</Heading>
+                      <List>
+                        {
+                          data[2][table].map((roll, i) => (
+                            <ListItem key={i}>
+                              <Text fontSize="xs">{roll}</Text>
+                            </ListItem>
+                          ))
+                        }
+                      </List>
+                    </HStack>
+                  ))
+                }
+                </Box>
+                <Button
+                  isDisabled={query?.length === 0}
+                  colorScheme="purple"
+                  onClick={() => {
+                    roll().then((answer) => {
+                      let n = [...names]
+                      n[i][2] = answer
+                      saveNames(n)
+                    })
+                  }}
+                  >
+                  Roll!
+                </Button>
               </AccordionPanel>
             </VStack>
           </HStack>
@@ -368,57 +404,6 @@ function NamesAccordion({names, saveNames, mode}) {
       ))
     }
     </Accordion>
-  )
-}
-
-function NamesList({names, mode, saveNames, highlight}) {
-  return (
-    <TableContainer>
-      <Table variant='simple' size='sm'>
-        <Tbody>
-          {
-            names.map((data, i) => (
-              <NameRow
-                name={data[0]}
-                color={data[1]}
-                names={names}
-                i={i} key={i}
-                mode={mode}
-                saveNames={saveNames}
-                highlight={highlight}
-              />
-            ))
-          }
-        </Tbody>
-      </Table>
-    </TableContainer>
-  )
-}
-
-function NameRow({name, color, i, names, saveNames, highlight, mode}) {
-  return (
-    <Tr key={i} bg={color + ".100"}>
-      <Td>
-        <ColorPicker
-          defaultColor={color}
-          onClick={(c) => {
-            let n = [...names]
-            n[i][1] = c
-            saveNames(n)
-          }}
-        />
-      </Td>
-      <Td>
-        <Highlight query={highlight} styles={{px:'2', py:'1', rounded:'full', border: '1px solid black', bg:'white', fontWeight:'bold'}}>{name}</Highlight>
-      </Td>
-      {mode === 'edit' &&
-        <Td>
-          <Button onClick={() => saveNames(names.toSpliced(i, 1))}>
-            🗑️
-          </Button>
-        </Td>
-      }
-    </Tr>
   )
 }
 
